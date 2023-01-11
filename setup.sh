@@ -131,6 +131,9 @@ function python_backend(){
     echo "[2] codegen-350M-multi (1GB total VRAM required; multi-language)"
     echo "[3] codegen-2B-mono (4GB total VRAM required; Python-only)"
     echo "[4] codegen-2B-multi (4GB total VRAM required; multi-language)"
+    echo "[5] galactica-30b (?GB total VRAM required; multi-language)"
+    echo "[6] galactica-6.7b (?GB total VRAM required; multi-language)"
+    echo "[7] galactica-125m (?GB total VRAM required; multi-language)"
 
     read -rp "Enter your choice [4]: " MODEL_NUM
 
@@ -140,12 +143,15 @@ function python_backend(){
         2) MODEL="codegen-350M-multi"; ORG="Salesforce" ;;
         3) MODEL="codegen-2B-mono"; ORG="Salesforce" ;;
         4) MODEL="codegen-2B-multi"; ORG="Salesforce" ;;
+        5) MODEL="galactica-30b"; ORG="facebook" ;;
+        6) MODEL="galactica-6.7b"; ORG="facebook" ;;
+        7) MODEL="galactica-125m"; ORG="facebook" ;;
         *) MODEL="codegen-2B-multi"; ORG="Salesforce" ;;
     esac
 
     # share huggingface cache? Should be safe to share, but permission issues may arise depending upon your docker setup
-    read -rp "Do you want to share your huggingface cache between host and docker container? y/n [n]: " SHARE_HF_CACHE
-    SHARE_HF_CACHE=${SHARE_HF_CACHE:-n}
+    read -rp "Do you want to share your huggingface cache between host and docker container? y/n [y]: " SHARE_HF_CACHE
+    SHARE_HF_CACHE=${SHARE_HF_CACHE:-y}
     if [[ ${SHARE_HF_CACHE:-y} =~ ^[Yy]$ ]]; then
         read -rp "Enter your huggingface cache directory [$HOME/.cache/huggingface]: " HF_CACHE_DIR
         HF_CACHE_DIR=${HF_CACHE_DIR:-$HOME/.cache/huggingface}
@@ -154,8 +160,8 @@ function python_backend(){
     fi
 
     # use int8? Allows larger models to fit in GPU but might be very marginally slower
-    read -rp "Do you want to use int8? y/n [y]: " USE_INT8
-    if [[ ${USE_INT8:-y} =~ ^[Nn]$ ]]; then
+    read -rp "Do you want to use int8? y/n [n]: " USE_INT8
+    if [[ ${USE_INT8:-n} =~ ^[Nn]$ ]]; then
         USE_INT8="0"
     else
         USE_INT8="1"

@@ -59,6 +59,7 @@ class TritonPythonModel:
             input_ids_torch = pb2torch(request, "input_ids")
             input_lengths_torch = pb2torch(request, "input_lengths")
             request_output_len_torch = pb2torch(request, "request_output_len")
+            request_output_scores = False and pb2torch(request, "is_return_log_probs")
 
             # Attention mask
             attention_mask = None
@@ -70,6 +71,9 @@ class TritonPythonModel:
             # Output length
             max_new_tokens = request_output_len_torch[0][0]
 
+            # Debug info:
+            print("max_new_tokens:", max_new_tokens)
+
             top_k = pb_utils.get_input_tensor_by_name(request, "runtime_top_k").as_numpy().tolist()[0]
             top_p = pb_utils.get_input_tensor_by_name(request, "runtime_top_p").as_numpy().tolist()[0]
             temperature = pb_utils.get_input_tensor_by_name(request, "temperature").as_numpy().tolist()[0]
@@ -77,11 +81,13 @@ class TritonPythonModel:
             n_samples = 1  # TODO: client doesn't send this yet. instead it duplicates the request n times
 
             # Generate
-            output_ids = self.model.generate(
-                input_ids=input_ids_torch, attention_mask=attention_mask,
+            output = self.model.generate(
+                input_ids=input_ids_torch.cuda(), attention_mask=attention_mask,
                 max_new_tokens=max_new_tokens, do_sample=True, top_k=top_k, top_p=top_p, num_return_sequences=n_samples,
-                temperature=temperature,
+                temperature=temperature, output_scores=request_output_scores, return_dict_in_generate=True,
             )
+
+            output_ids = output.sequences.cpu()
 
             # client wants batch x beam_width x seq_len and we don't support beam_width yet
             output_ids = output_ids.unsqueeze(1)
@@ -89,14 +95,34 @@ class TritonPythonModel:
             # create output tensors
             out_tensor_pb = torch2pb("output_ids", output_ids)
 
+            response_parts = [out_tensor_pb]
+
+            # # create output scores tensor
+            # if request_output_scores:
+            #     """ From HuggingFace docs:
+            #     scores (`tuple(torch.FloatTensor)` *optional*, returned when `output_scores=True` is passed or when `config.output_scores=True`):
+            #     Beam transition scores for each vocabulary token at each generation step. Beam transition scores consisting
+            #     of log probabilities of tokens conditioned on log softmax of previously generated tokens in this beam.
+            #     Tuple of `torch.FloatTensor` with up to `max_new_tokens` elements (one element for each generated token),
+            #     with each tensor of shape `(batch_size*num_beams*num_return_sequences, config.vocab_size)`.
+            #     """
+            #     # Now the output we need is: output_log_probs	[batch_size, beam_width, request_output_seq_len]
+            #     # So we need to
+            #     out_tensor_pb_scores = torch2pb("output_scores", [])
+            #     response_parts += [out_tensor_pb_scores]
+
             # calculate sequence_length
             sequence_length = torch.zeros(output_ids.shape[:2], dtype=torch.int32)
             for i in range(output_ids.shape[0]):
                 sequence_length[i, 0] = torch.sum(output_ids[i, 0] != self.model.config.eos_token_id).item()
             sequence_length_pb = torch2pb("sequence_length", sequence_length)
 
+            print("sequence_length:", sequence_length)
+
+            response_parts += [sequence_length_pb]
+
             # create response
-            response = pb_utils.InferenceResponse([out_tensor_pb, sequence_length_pb])
+            response = pb_utils.InferenceResponse(response_parts)
             responses.append(response)
 
         return responses

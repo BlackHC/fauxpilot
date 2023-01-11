@@ -33,3 +33,5 @@ services:
       - .env
     ports:
       - "${API_EXTERNAL_PORT}:5000"
+    volumes:
+      - /home/blackhc/PycharmProjects/fauxpilot/copilot_proxy:/python-docker

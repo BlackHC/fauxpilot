@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 import string
 import time
@@ -11,12 +12,15 @@ from tritonclient.utils import np_to_triton_dtype, InferenceServerException
 np.finfo(np.dtype("float32"))
 np.finfo(np.dtype("float64"))
 
+logger = logging.getLogger(__name__)
+
 
 class CodeGenProxy:
     def __init__(self, host: str = 'triton', port: int = 8001, verbose: bool = False):
-        self.tokenizer = Tokenizer.from_file('/python-docker/cgtok/tokenizer.json')
+        #self.tokenizer = Tokenizer.from_file('/python-docker/cgtok/tokenizer.json')
+        self.tokenizer = Tokenizer.from_pretrained('facebook/galactica-30b')
         self.client = client_util.InferenceServerClient(url=f'{host}:{port}', verbose=verbose)
-        self.PAD_CHAR = 50256
+        self.PAD_CHAR = 1
 
         # Max number of tokens the model can handle
         self.MAX_MODEL_LEN = 2048
@@ -73,6 +77,8 @@ class CodeGenProxy:
         return np.array([flat_ids, offsets], dtype="int32").transpose((1, 0, 2))
 
     def generate(self, data):
+        logging.warn(data)
+
         prompt = data['prompt']
         n = data.get('n', 1)
         model_name = data["model"]
@@ -84,7 +90,7 @@ class CodeGenProxy:
         input_start_ids = np.repeat(input_start_ids, n, axis=0).astype(np_type)
         prompt_len = input_start_ids.shape[1]
         input_len = prompt_len * np.ones([input_start_ids.shape[0], 1]).astype(np_type)
-        max_tokens = data.get('max_tokens', 16)
+        max_tokens = min(data.get('max_tokens', 16), 50)
         prompt_tokens: int = input_len[0][0]
         requested_tokens = max_tokens + prompt_tokens
         if requested_tokens > self.MAX_MODEL_LEN:
@@ -162,7 +168,7 @@ class CodeGenProxy:
 
         # All of these squeeze(1)s are to remove the beam width dimension.
         output_data = output_data.squeeze(1)
-        if want_logprobs:
+        if False and want_logprobs:
             lp_data = result.as_numpy("output_log_probs").squeeze(1)
             # clp_data = result.as_numpy("cum_log_probs").squeeze(1)
         else:

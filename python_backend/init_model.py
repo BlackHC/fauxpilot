@@ -25,8 +25,8 @@ args = parser.parse_args()
 model_dir_path = Path(os.path.join(Path(args.model_dir), f"py-{args.org_name}-{args.model_name}/py-model/1"))
 model_dir_path.mkdir(parents=True, exist_ok=True)
 
-# Step 2: copy model.py
-shutil.copy(os.path.join(SCRIPT_DIR, 'model.py'), os.path.join(model_dir_path, 'model.py'))
+# Step 2: create a hardlink to model.py
+os.link(os.path.join(SCRIPT_DIR, 'model.py'), os.path.join(model_dir_path, 'model.py'))
 
 # Step 3: Generate config.pbtxt
 with open(CONFIG_TEMPLATE_PATH, 'r') as f:
