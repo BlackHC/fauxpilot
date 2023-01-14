@@ -121,7 +121,7 @@ function fastertransformer_backend(){
 #        rm -f "$ARCHIVE"
 #      else
       echo "Downloading and converting the model, this will take a while..."
-      echo docker run --rm -v $(realpath converter):/workspace -v ~/.cache/huggingface:/root/.cache/huggingface -v "${MODELS_ROOT_DIR}":/models -e MODEL=${MODEL} -e NUM_GPUS="${NUM_GPUS}" fauxpilot-converter
+      docker run --rm -v $(realpath converter):/workspace -v ~/.cache/huggingface:/root/.cache/huggingface -v "${MODELS_ROOT_DIR}":/models -e MODEL=${MODEL} -e NUM_GPUS="${NUM_GPUS}" fauxpilot-converter
 #      fi
     fi
 
