@@ -17,6 +17,8 @@ fi
 
 echo ${MODEL_TYPE}
 
+export HUGGINGFACE_HUB_CACHE=/root/.cache/huggingface/hub
+
 # If the model type is codegen, then we need to download the codegen and convert it:
 if [[ ${MODEL_TYPE} == codegen ]]; then
     exit

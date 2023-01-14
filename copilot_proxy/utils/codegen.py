@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class CodeGenProxy:
     def __init__(self, host: str = 'triton', port: int = 8001, verbose: bool = False):
         #self.tokenizer = Tokenizer.from_file('/python-docker/cgtok/tokenizer.json')
-        self.tokenizer = Tokenizer.from_pretrained('facebook/galactica-30b')
+        self.tokenizer = Tokenizer.from_pretrained('facebook/galactica-6.7b')
         self.client = client_util.InferenceServerClient(url=f'{host}:{port}', verbose=verbose)
         self.PAD_CHAR = 1
 

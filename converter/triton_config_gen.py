@@ -3,7 +3,7 @@
 import argparse
 import os
 from string import Template
-from transformers import GPTJConfig, AutoTokenizer
+from transformers import AutoTokenizer, AutoConfig
 import torch
 
 def round_up(x, multiple):
@@ -42,9 +42,10 @@ args = parser.parse_args()
 # Global options
 if args.hf_model_dir.endswith('/'):
     args.hf_model_dir = args.hf_model_dir[:-1]
-config = GPTJConfig.from_pretrained(args.hf_model_dir)
+
+config = AutoConfig.from_pretrained(args.hf_model_dir)
 tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
-max_seq_len = config.n_positions
+max_seq_len = config.n_positions if hasattr(config, 'n_positions') else config.max_position_embeddings
 is_half = '1' if config.torch_dtype == torch.float16 else '0'
 
 # Read in the template config file
@@ -58,15 +59,16 @@ params['tensor_para_size'] = args.num_gpu
 params['name'] = model_name
 params['max_seq_len'] = max_seq_len
 params['is_half'] = is_half
-params['head_num'] = config.n_head
-params['size_per_head'] = config.n_embd // config.n_head
-params['inter_size'] = 4*config.n_embd
+params['head_num'] = config.n_head if hasattr(config, 'n_head') else config.num_attention_heads
+n_embd = config.n_embd if hasattr(config, 'n_embd') else config.hidden_size
+params['size_per_head'] = n_embd // params['head_num']
+params['inter_size'] = 4*n_embd
 # Vocab size gets rounded up to a multiple of 1024
 params['vocab_size'] = round_up(tokenizer.vocab_size, 1024)
 params['start_id'] = tokenizer.eos_token_id
 params['end_id'] = tokenizer.eos_token_id
-params['decoder_layers'] = config.n_layer
-params['rotary_embedding'] = config.rotary_dim
+params['decoder_layers'] = config.n_layer if hasattr(config, 'n_layer') else config.num_hidden_layers
+params['rotary_embedding'] = config.rotary_dim if hasattr(config, 'rotary_dim') else 0
 # NOTE: this assumes that the model dir follows the format used by the other conversion scripts
 model_dir = os.path.join(args.model_store, f'{model_name}-{args.num_gpu}gpu')
 weights_path = os.path.join(model_dir, 'fastertransformer', f'{version}', f'{args.num_gpu}-gpu')

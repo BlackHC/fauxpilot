@@ -1,6 +1,6 @@
 name: "fastertransformer"
 backend: "fastertransformer"
-default_model_filename: "facebook/galactica-125m"
+default_model_filename: "facebook/galactica-6.7b"
 max_batch_size: 1024
 
 model_transaction_policy {
@@ -260,31 +260,31 @@ parameters {
 parameters {
   key: "head_num"
   value: {
-    string_value: "12"
+    string_value: "32"
   }
 }
 parameters {
   key: "size_per_head"
   value: {
-    string_value: "64"
+    string_value: "128"
   }
 }
 parameters {
   key: "inter_size"
   value: {
-    string_value: "3072"
+    string_value: "16384"
   }
 }
 parameters {
   key: "vocab_size"
   value: {
-    string_value: "50272"
+    string_value: "50000"
   }
 }
 parameters {
   key: "start_id"
   value: {
-    string_value: "2"
+    string_value: "0"
   }
 }
 parameters {
@@ -296,7 +296,7 @@ parameters {
 parameters {
   key: "decoder_layers"
   value: {
-    string_value: "12"
+    string_value: "32"
   }
 }
 parameters {

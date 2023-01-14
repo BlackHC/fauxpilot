@@ -121,13 +121,12 @@ function fastertransformer_backend(){
 #        rm -f "$ARCHIVE"
 #      else
       echo "Downloading and converting the model, this will take a while..."
-      docker run --rm -v "${MODELS_ROOT_DIR}":/models -e MODEL=${MODEL} -e NUM_GPUS="${NUM_GPUS}" fauxpilot-converter
+      echo docker run --rm -v $(realpath converter):/workspace -v ~/.cache/huggingface:/root/.cache/huggingface -v "${MODELS_ROOT_DIR}":/models -e MODEL=${MODEL} -e NUM_GPUS="${NUM_GPUS}" fauxpilot-converter
 #      fi
     fi
 
     # Not used for this backend but needs to be present
-    HF_CACHE_DIR="$(pwd)/.hf_cache"
-    mkdir -p "$HF_CACHE_DIR"
+    HF_CACHE_DIR=$(realpath ~/.cache/huggingface)
     echo "HF_CACHE_DIR=${HF_CACHE_DIR}" >> .env
 }
 

@@ -401,7 +401,7 @@ if __name__ == "__main__":
     parser.add_argument('-trained_gpu_num', '-t_g', type=int, help='How many gpus for inference', default=1)
     parser.add_argument('-infer_gpu_num', '-i_g', type=int, help='How many gpus for inference', required=True)
     parser.add_argument("-processes", "-p", type=int, help="How many processes to spawn for conversion (default: 4)", default=4)
-    parser.add_argument("-weight_data_type", type=str, default="fp32", choices=["fp32", "fp16"])
+    parser.add_argument("-weight_data_type", type=str, default="fp16", choices=["fp32", "fp16"])
     parser.add_argument("-quantize",
                         help="Store selected in int8, run the models to determine scaling factors",
                         action="store_true")
