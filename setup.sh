@@ -66,6 +66,9 @@ function fastertransformer_backend(){
     echo "[6] codegen-6B-multi (13GB total VRAM required; multi-language)"
     echo "[7] codegen-16B-mono (32GB total VRAM required; Python-only)"
     echo "[8] codegen-16B-multi (32GB total VRAM required; multi-language)"
+    echo "[9] galactica-30b (?GB total VRAM required; multi-language)"
+    echo "[10] galactica-6.7b (?GB total VRAM required; multi-language)"
+    echo "[11] galactica-125m (?GB total VRAM required; multi-language)"
     # Read their choice
     read -rp "Enter your choice [6]: " MODEL_NUM
 
@@ -79,6 +82,9 @@ function fastertransformer_backend(){
         6) MODEL="codegen-6B-multi" ;;
         7) MODEL="codegen-16B-mono" ;;
         8) MODEL="codegen-16B-multi" ;;
+        9) MODEL="galactica-30b" ;;
+        10) MODEL="galactica-6.7b" ;;
+        11) MODEL="galactica-125m" ;;
         *) MODEL="codegen-6B-multi" ;;
     esac
 
@@ -103,20 +109,20 @@ function fastertransformer_backend(){
 
     if [[ ${DOWNLOAD_MODEL:-y} =~ ^[Yy]$ ]]
     then
-      if [ "$NUM_GPUS" -le 2 ]; then
-        echo "Downloading the model from HuggingFace, this will take a while..."
-        SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-        DEST="${MODEL}-${NUM_GPUS}gpu"
-        ARCHIVE="${MODELS_ROOT_DIR}/${DEST}.tar.zst"
-        cp -r "$SCRIPT_DIR"/converter/models/"$DEST" "${MODELS_ROOT_DIR}"
-        curl -L "https://huggingface.co/moyix/${MODEL}-gptj/resolve/main/${MODEL}-${NUM_GPUS}gpu.tar.zst" \
-            -o "$ARCHIVE"
-        zstd -dc "$ARCHIVE" | tar -xf - -C "${MODELS_ROOT_DIR}"
-        rm -f "$ARCHIVE"
-      else
-        echo "Downloading and converting the model, this will take a while..."
-        docker run --rm -v "${MODELS_ROOT_DIR}":/models -e MODEL=${MODEL} -e NUM_GPUS="${NUM_GPUS}" moyix/model_converter:latest
-      fi
+#      if [ "$NUM_GPUS" -le 2 ]; then
+#        echo "Downloading the model from HuggingFace, this will take a while..."
+#        SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+#        DEST="${MODEL}-${NUM_GPUS}gpu"
+#        ARCHIVE="${MODELS_ROOT_DIR}/${DEST}.tar.zst"
+#        cp -r "$SCRIPT_DIR"/converter/models/"$DEST" "${MODELS_ROOT_DIR}"
+#        curl -L "https://huggingface.co/moyix/${MODEL}-gptj/resolve/main/${MODEL}-${NUM_GPUS}gpu.tar.zst" \
+#            -o "$ARCHIVE"
+#        zstd -dc "$ARCHIVE" | tar -xf - -C "${MODELS_ROOT_DIR}"
+#        rm -f "$ARCHIVE"
+#      else
+      echo "Downloading and converting the model, this will take a while..."
+      docker run --rm -v "${MODELS_ROOT_DIR}":/models -e MODEL=${MODEL} -e NUM_GPUS="${NUM_GPUS}" fauxpilot-converter
+#      fi
     fi
 
     # Not used for this backend but needs to be present
